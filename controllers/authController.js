@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 async function register(req, res) {
 const { email, password, firstName, lastName } = req.body;
@@ -19,6 +20,22 @@ res.status(201).json({ message: "Utilisateur créé avec succès !", userId: new
 } catch(error){
     res.status(500).json({ message: "Erreur serveur lors de l'inscription", error: error.message });
 }
+}
+
+async function login(req, res) {
+    const { email, password } = req.body;
+    try{
+        const user = await User.findOne({ email });
+        if (!user) { return res.status(400).json({ message: "Identifiants incorrects" }); }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) { return res.status(400).json({ message: "Identifiants incorrects" }); }
+        
+
+
+    } catch(error) {
+        res.status(500).json({ message: "Erreur serveur lors de la connexion", error: error.message});
+
+    }
 }
 
 module.exports = { register};
