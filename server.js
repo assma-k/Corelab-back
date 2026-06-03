@@ -11,9 +11,9 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/', (req, res) => {
-  res.send('Server is running');
+  res.json({ message: 'API Corelab en ligne' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 API démarrée sur le port ${PORT}`);
 });
