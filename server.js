@@ -15,5 +15,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 API démarrée sur le port ${PORT}`);
+  console.log(`API démarrée sur le port ${PORT}`);
 });
