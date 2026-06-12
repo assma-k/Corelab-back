@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const Course = require('../models/Course');
+const Lesson = require('../models/Lesson');
 const fs = require('fs');
 const path = require('path');
 
@@ -37,4 +39,37 @@ async function importStudents(req, res) {
     }
 }
 
-module.exports = { importStudents };
+async function createLesson(req, res) {
+    const courseId = req.params.courseId;
+    const { title } = req.body;
+    
+    if (!req.file) {
+        return res.status(400).json({ message: "Veuillez fournir un fichier HTML pour la leçon." });
+    }
+    
+    try {
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: "Cours introuvable." });
+        }
+        
+        const contentUrl = req.file.path;
+        
+        const newLesson = new Lesson({
+            title: title || req.file.originalname,
+            contentUrl,
+            courseId
+        });
+        
+        await newLesson.save();
+        
+        course.lessons.push(newLesson._id);
+        await course.save();
+        
+        res.status(201).json({ message: "Leçon ajoutée avec succès !", lesson: newLesson });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de l'ajout de la leçon.", error: error.message });
+    }
+}
+
+module.exports = { importStudents, createLesson };
