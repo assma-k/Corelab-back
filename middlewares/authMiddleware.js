@@ -23,4 +23,12 @@ function isAdmin(req, res, next) {
     }
 }
 
-module.exports = { verifyToken, isAdmin };
+function isStudent(req, res, next) {
+    if(req.user && req.user.role === 'student') {
+        next();
+    } else {
+        res.status(403).json({ message: "Accès refusé. Droits d'étudiant requis." });
+    }
+}
+
+module.exports = { verifyToken, isAdmin, isStudent };
