@@ -39,4 +39,20 @@ async function login(req, res) {
     }
 }
 
-module.exports = { register, login};
+async function updatePassword(req, res) {
+    const id = req.user.id;
+    const { newPassword } = req.body;
+    try {
+        const user = await User.findById(id);
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedNewPassword;
+        user.firstLogin = false;
+        await user.save();
+        res.status(200).json({ message: "Mot de passe mis à jour avec succès. Première connexion validée !" });
+    } catch(error) {
+        res.status(500).json({ message: "Mot de passe non mis à jour." });
+    }
+}
+
+module.exports = { register, login, updatePassword};
