@@ -1,8 +1,8 @@
 const User = require('../models/User');
 const Course = require('../models/Course');
-const bcrypt = require('bcrypt');
-const Course = require('../models/Course');
 const Lesson = require('../models/Lesson');
+const Quiz = require('../models/Quiz');
+const bcrypt = require('bcrypt');
 const fs = require('fs');
 const path = require('path');
 
@@ -117,4 +117,49 @@ async function createLesson(req, res) {
     }
 }
 
-module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson };
+async function importQuiz(req, res) {
+    const courseId = req.params.courseId;
+    
+    if (!req.file) {
+        return res.status(400).json({ message: "Veuillez fournir un fichier JSON pour le quiz." });
+    }
+    
+    try {
+        const course = await Course.findById(courseId);
+        if (!course) {
+            fs.unlinkSync(req.file.path);
+            return res.status(404).json({ message: "Cours introuvable." });
+        }
+        
+        const fileContent = fs.readFileSync(req.file.path, 'utf-8');
+        const quizData = JSON.parse(fileContent);
+        
+        if (!quizData.title || !quizData.questions || !Array.isArray(quizData.questions)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).json({ message: "Format du JSON invalide. 'title' et 'questions' sont requis." });
+        }
+        
+        const newQuiz = new Quiz({
+            title: quizData.title,
+            passingThreshold: quizData.passingThreshold || 50,
+            courseId: courseId,
+            questions: quizData.questions
+        });
+        
+        await newQuiz.save();
+        
+        course.quizzes.push(newQuiz._id);
+        await course.save();
+        
+        fs.unlinkSync(req.file.path);
+        
+        res.status(201).json({ message: "Quiz importé avec succès !", quiz: newQuiz });
+    } catch (error) {
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        res.status(500).json({ message: "Erreur lors de l'import du quiz.", error: error.message });
+    }
+}
+
+module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz };
