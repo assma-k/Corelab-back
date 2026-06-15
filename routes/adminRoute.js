@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/uploadMiddleware');
-const { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz, createCohort, getAllCohorts, addStudentsToCohort, assignCourse, getQuizResults, exportQuizResultsCSV } = require('../controllers/adminController');
+const { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz, createCohort, getAllCohorts, addStudentsToCohort, assignCourse, getQuizResults, exportQuizResultsCSV } = require('../controllers/userController');
 const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 
 router.post('/import-students', verifyToken, isAdmin, upload.single('file'), importStudents);

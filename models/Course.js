@@ -8,8 +8,21 @@ const courseSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        trim: true
+        trim: true,
+        default: ''
     },
+    coverImage: {
+        type: String,
+        default: ''
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    students: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     lessons: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Lesson'

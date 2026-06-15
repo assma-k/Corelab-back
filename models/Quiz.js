@@ -2,18 +2,22 @@ const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema({
     questionText: {
-        type: String,
-        required: true
+        type: String
+    },
+    text: {
+        type: String
     },
     options: [{
         type: String,
         required: true
     }],
     correctAnswerIndex: {
-        type: Number,
-        required: true
-    }
-});
+        type: Number
+    },
+    correctAnswers: [{
+        type: Number
+    }]
+}, { _id: true });
 
 const quizSchema = new mongoose.Schema({
     title: {
@@ -23,13 +27,21 @@ const quizSchema = new mongoose.Schema({
     },
     courseId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Course',
-        required: true
+        ref: 'Course'
+    },
+    course: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Course'
     },
     passingThreshold: {
         type: Number,
-        required: true,
-        default: 50 // Par exemple 50%
+        default: 50
+    },
+    threshold: {
+        type: Number,
+        default: 50,
+        min: 0,
+        max: 100
     },
     questions: [questionSchema]
 }, { timestamps: true });

@@ -7,39 +7,45 @@ const Assignment = require('../models/Assignment');
 const QuizResult = require('../models/QuizResult');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
-const path = require('path');
+const { sendWelcomeEmail } = require('../utils/emailService');
 
+//importation des étudiants
 async function importStudents(req, res) {
-    if(!req.file) {
-        return res.status(400).json({ message: 'Veuillez fournir un fichier'});
+    if (!req.file) {
+        return res.status(400).json({ message: 'Veuillez fournir un fichier' });
     }
     try {
+        //on recupere le fichier
         const filePath = req.file.path;
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const lines = fileContent.split('\n');
-        for(const line of lines){
+        //on parcourt les lignes
+        for (const line of lines) {
             const cleanedLine = line.trim();
-            //si ligne vide passe a la suite
+            //on ignore les lignes vides
             if (!cleanedLine) continue;
-            //destructure par ,
             const [email, firstName, lastName] = cleanedLine.split(',');
-            //ignore la ligen d'entete 
+            //on ignore la ligne d'en-tête
             if (email === 'email') continue;
-            //verif existance student
             const userExists = await User.findOne({ email });
+            //on ignore les étudiants déjà existants
             if (userExists) continue;
-            //genere MDP default
+            //on hash le mot de passe
             const salt = await bcrypt.genSalt(10);
+            //on définit le mot de passe par défaut de l'etudiant 
             const hashedPassword = await bcrypt.hash('CoreLab2026!', salt);
-            //cree et save student
+            //on crée le nouvel étudiant
             const newStudent = new User({ email, password: hashedPassword, firstName, lastName, role: 'student' });
             await newStudent.save();
+            //envoie du mail de bienvenue
+            await sendWelcomeEmail(email, firstName, 'CoreLab2026!');
         }
+        //on supprime le fichier
         fs.unlinkSync(filePath);
-        res.status(201).json({ message: "Importation des étudiants réussie avec succès !" });
+        res.status(201).json({ message: "Importation des étudiants réussie !" });
 
-    }catch (error){
-        res.status(500).json({ message: "Erreur lors de l'importation", error: error.message});
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de l'importation", error: error.message });
     }
 }
 async function getAllCourses(req, res) {
