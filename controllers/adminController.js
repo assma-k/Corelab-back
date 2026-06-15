@@ -1,3 +1,15 @@
+const User = require('../models/User');
+const Course = require('../models/Course');
+const Lesson = require('../models/Lesson');
+const Quiz = require('../models/Quiz');
+const Cohort = require('../models/Cohort');
+const Assignment = require('../models/Assignment');
+const QuizResult = require('../models/QuizResult');
+const bcrypt = require('bcrypt');
+const fs = require('fs');
+const path = require('path');
+
+async function importStudents(req, res) {
     if(!req.file) {
         return res.status(400).json({ message: 'Veuillez fournir un fichier'});
     }
@@ -222,4 +234,58 @@ async function assignCourse(req, res) {
     }
 }
 
-module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz, createCohort, getAllCohorts, addStudentsToCohort, assignCourse };
+async function getQuizResults(req, res) {
+    try {
+        const { studentId, quizId } = req.query;
+        let filter = {};
+        
+        if (studentId) filter.studentId = studentId;
+        if (quizId) filter.quizId = quizId;
+        
+        const results = await QuizResult.find(filter)
+            .populate('studentId', 'firstName lastName email')
+            .populate('quizId', 'title courseId');
+            
+        res.status(200).json(results);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la récupération des résultats", error: error.message });
+    }
+}
+
+async function exportQuizResultsCSV(req, res) {
+    try {
+        const { studentId, quizId } = req.query;
+        let filter = {};
+        
+        if (studentId) filter.studentId = studentId;
+        if (quizId) filter.quizId = quizId;
+        
+        const results = await QuizResult.find(filter)
+            .populate('studentId', 'firstName lastName email')
+            .populate('quizId', 'title');
+            
+        // Génération CSV manuelle (sans librairie externe pour simplifier)
+        let csv = 'Etudiant,Email,Quiz,Score,Reussi,Date\n';
+        
+        results.forEach(r => {
+            const studentName = r.studentId ? `${r.studentId.firstName} ${r.studentId.lastName}` : 'Inconnu';
+            const email = r.studentId ? r.studentId.email : 'Inconnu';
+            const quizTitle = r.quizId ? r.quizId.title : 'Inconnu';
+            const date = r.createdAt ? r.createdAt.toISOString().split('T')[0] : '';
+            
+            // Échapper les virgules potentielles
+            const safeName = `"${studentName.replace(/"/g, '""')}"`;
+            const safeQuiz = `"${quizTitle.replace(/"/g, '""')}"`;
+            
+            csv += `${safeName},${email},${safeQuiz},${r.score},${r.passed ? 'Oui' : 'Non'},${date}\n`;
+        });
+        
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename="resultats_qcm.csv"');
+        res.status(200).send(csv);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de l'export des résultats", error: error.message });
+    }
+}
+
+module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz, createCohort, getAllCohorts, addStudentsToCohort, assignCourse, getQuizResults, exportQuizResultsCSV };
