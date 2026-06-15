@@ -1,5 +1,7 @@
+// Middleware de validation
 function validate(zod) {
     return function(req, res, next) {
+        //on verifie que le body est valide
         try {
             zod.parse(req.body);
             next();

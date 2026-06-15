@@ -8,6 +8,7 @@ async function createLesson(req, res) {
         // gérer les fichiers médias si envoyés via Multer
         const mediaFiles = req.files ? req.files.map(f => f.path) : [];
 
+        //création de la leçon
         const newLesson = new Lesson({
             title,
             course: courseId,
@@ -22,10 +23,12 @@ async function createLesson(req, res) {
     }
 }
 
-// US #8 - Modifier une leçon 
+//Modifier une leçon 
 async function updateLesson(req, res) {
     try {
+        //on recupere l'id de la leçon
         const { id } = req.params;
+        //on met a jour la leçon
         const updatedLesson = await Lesson.findByIdAndUpdate(id, req.body, { new: true });
         if (!updatedLesson) return res.status(404).json({ message: "Leçon non trouvée" });
         res.status(200).json({ message: "Leçon mise à jour !", lesson: updatedLesson });
@@ -34,10 +37,12 @@ async function updateLesson(req, res) {
     }
 }
 
-// US #11 - Accéder à une leçon 
+// Accéder à une leçon 
 async function getLesson(req, res) {
     try {
+        //on recupere l'id de la leçon
         const { id } = req.params;
+        //on recupere la leçon
         const lesson = await Lesson.findById(id).populate('course');
         if (!lesson) return res.status(404).json({ message: "Leçon non trouvée" });
 
@@ -51,9 +56,12 @@ async function getLesson(req, res) {
     }
 }
 
+// Récupérer les leçons d'un cours
 async function getLessonsByCourse(req, res) {
     try {
+        //on recupere l'id du cours
         const { courseId } = req.params;
+        //on recupere les leçons du cours
         const lessons = await Lesson.find({ course: courseId }).sort('order');
         res.status(200).json(lessons);
     } catch (error) {

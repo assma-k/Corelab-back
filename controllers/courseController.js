@@ -3,8 +3,10 @@ const Course = require('../models/Course');
 // Créer un cours 
 async function createCourse(req, res) {
     try {
+        //on recupere les données du cours
         const { title, description } = req.body;
         const coverImage = req.file ? req.file.path : '';
+        //création du cours
         const newCourse = new Course({
             title,
             description,
@@ -21,6 +23,7 @@ async function createCourse(req, res) {
 // Récupérer tous les cours 
 async function getAllCourses(req, res) {
     try {
+        //on recupere tous les cours
         const courses = await Course.find().populate('createdBy', 'firstName lastName');
         res.status(200).json(courses);
     } catch (error) {
@@ -31,6 +34,7 @@ async function getAllCourses(req, res) {
 // Récupérer mes cours 
 async function getStudentCourses(req, res) {
     try {
+        //on recupere les cours de l'etudiant
         const courses = await Course.find({ students: req.user.id });
         res.status(200).json(courses);
     } catch (error) {
@@ -41,7 +45,9 @@ async function getStudentCourses(req, res) {
 // Assigner un étudiant 
 async function assignStudents(req, res) {
     try {
+        //on recupere l'id du cours et de l'etudiant
         const { courseId, studentId } = req.body;
+        //on assigne l'etudiant au cours
         const course = await Course.findByIdAndUpdate(
             courseId,
             { $addToSet: { students: studentId } },
@@ -57,7 +63,9 @@ async function assignStudents(req, res) {
 // Retirer un étudiant 
 async function removeStudent(req, res) {
     try {
+        //on recupere l'id du cours et de l'etudiant
         const { courseId, studentId } = req.params;
+        //on retire l'etudiant du cours
         const course = await Course.findByIdAndUpdate(
             courseId,
             { $pull: { students: studentId } },

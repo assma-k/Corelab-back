@@ -4,18 +4,23 @@ const Attempt = require('../models/Attempt');
 // Soumettre un Quiz 
 async function submitQuiz(req, res) {
     try {
+        //on recupere l'id du quiz
         const { id } = req.params;
+        //on recupere les reponses
         const { answers } = req.body;
+        //on recupere le quiz
         const quiz = await Quiz.findById(id);
-        
+        //on compte les reponses correctes
         let correctCount = 0;
+        //on parcourt les questions
         quiz.questions.forEach((q, i) => {
             if (q.correctAnswers.includes(answers[i])) correctCount++;
         });
-
+        //on calcule le score
         const score = (correctCount / quiz.questions.length) * 100;
         const passed = score >= quiz.threshold;
 
+        //on enregistre la tentative
         const attempt = new Attempt({
             student: req.user.id,
             quiz: id,

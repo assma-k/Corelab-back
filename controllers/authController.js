@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+// Enregistrer un nouvel utilisateur 
 async function register(req, res) {
     const { email, password, firstName, lastName } = req.body;
     try {
@@ -22,11 +23,14 @@ async function register(req, res) {
     }
 }
 
+// Se connecter 
 async function login(req, res) {
     const { email, password } = req.body;
     try {
+        //si email existe
         const user = await User.findOne({ email });
         if (!user) { return res.status(401).json({ message: "Identifiants incorrects" }); }
+        //comparaison MDP
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) { return res.status(401).json({ message: "Identifiants incorrects" }); }
         //creation token de co 
@@ -39,13 +43,19 @@ async function login(req, res) {
     }
 }
 
+// Mettre à jour le mot de passe 
 async function updatePassword(req, res) {
+    //on recupere l'id de l'utilisateur
     const id = req.user.id;
+    //on recupere le nouveau mdp
     const { newPassword } = req.body;
     try {
+        //on recupere l'utilisateur
         const user = await User.findById(id);
+        //hachage du nouveau mdp
         const salt = await bcrypt.genSalt(10);
         const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+        //mise a jour du mdp
         user.password = hashedNewPassword;
         user.firstLogin = false;
         await user.save();
