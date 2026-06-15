@@ -1,12 +1,3 @@
-const User = require('../models/User');
-const Course = require('../models/Course');
-const Lesson = require('../models/Lesson');
-const Quiz = require('../models/Quiz');
-const bcrypt = require('bcrypt');
-const fs = require('fs');
-const path = require('path');
-
-async function importStudents(req, res) {
     if(!req.file) {
         return res.status(400).json({ message: 'Veuillez fournir un fichier'});
     }
@@ -162,4 +153,73 @@ async function importQuiz(req, res) {
     }
 }
 
-module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz };
+async function createCohort(req, res) {
+    const { name } = req.body;
+    try {
+        const newCohort = new Cohort({ name });
+        await newCohort.save();
+        res.status(201).json({ message: "Cohorte créée avec succès !", cohort: newCohort });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la création de la cohorte", error: error.message });
+    }
+}
+
+async function getAllCohorts(req, res) {
+    try {
+        const cohorts = await Cohort.find().populate('students', 'firstName lastName email');
+        res.status(200).json(cohorts);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la récupération des cohortes", error: error.message });
+    }
+}
+
+async function addStudentsToCohort(req, res) {
+    const { id } = req.params;
+    const { studentIds } = req.body;
+    
+    if (!studentIds || !Array.isArray(studentIds)) {
+        return res.status(400).json({ message: "Veuillez fournir un tableau studentIds." });
+    }
+    
+    try {
+        const cohort = await Cohort.findById(id);
+        if (!cohort) return res.status(404).json({ message: "Cohorte introuvable" });
+        
+        studentIds.forEach(studentId => {
+            if (!cohort.students.includes(studentId)) {
+                cohort.students.push(studentId);
+            }
+        });
+        
+        await cohort.save();
+        res.status(200).json({ message: "Étudiants ajoutés avec succès !", cohort });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de l'ajout des étudiants", error: error.message });
+    }
+}
+
+async function assignCourse(req, res) {
+    const { courseId, assignedToUser, assignedToCohort, lessonUnlockDates } = req.body;
+    
+    if (!courseId) {
+        return res.status(400).json({ message: "Veuillez fournir un courseId." });
+    }
+    if (!assignedToUser && !assignedToCohort) {
+        return res.status(400).json({ message: "Veuillez fournir assignedToUser ou assignedToCohort." });
+    }
+    
+    try {
+        const newAssignment = new Assignment({
+            courseId,
+            assignedToUser,
+            assignedToCohort,
+            lessonUnlockDates
+        });
+        await newAssignment.save();
+        res.status(201).json({ message: "Cours assigné avec succès !", assignment: newAssignment });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de l'assignation du cours", error: error.message });
+    }
+}
+
+module.exports = { importStudents, getAllCourses, createCourse, getCourseById, updateCourse, createLesson, importQuiz, createCohort, getAllCohorts, addStudentsToCohort, assignCourse };

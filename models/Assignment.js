@@ -13,7 +13,11 @@ const assignmentSchema = new mongoose.Schema({
     assignedToCohort: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Cohort'
-    }
+    },
+    lessonUnlockDates: [{
+        lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
+        unlockDate: { type: Date }
+    }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Assignment', assignmentSchema);
